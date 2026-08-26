@@ -89,6 +89,13 @@
 		regulator-always-on;
 		regulator-boot-on;
 	};
+    usb_pwr: usb‑power {
+    compatible = "gpio‑output";
+    gpios = <&gpio3 6 GPIO_ACTIVE_LOW>;
+    pinctrl-names = "default";
+    pinctrl-0 = <&pinctrl_usb_pwr>;
+    status = "okay";
+};
 
 	vdd_log: vdd-log {
 		compatible = "pwm-regulator";
