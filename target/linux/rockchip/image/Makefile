@@ -1,9 +1,9 @@
-# SPDX-License-Identifier: GPL-2.0-only
+﻿# SPDX-License-Identifier: GPL-2.0-only
 
 include $(TOPDIR)/rules.mk
 include $(INCLUDE_DIR)/image.mk
 
-DEVICE_VARS += UBOOT_DEVICE_NAME
+DEVICE_VARS += UBOOT_DEVICE_NAME CUSTOM_UBOOT_DIR
 
 define Build/Compile
 	$(CP) $(LINUX_DIR)/COPYING $(KDIR)/COPYING.linux
@@ -63,6 +63,30 @@ define Build/pine64-bin
 	dd if="$(STAGING_DIR_IMAGE)"/$(SOC)-idbloader.bin of="$@" seek=64 conv=notrunc
 	dd if="$(STAGING_DIR_IMAGE)"/$(UBOOT_DEVICE_NAME)-uboot.img of="$@" seek=16384 conv=notrunc
 	dd if="$(STAGING_DIR_IMAGE)"/$(SOC)-trust.bin of="$@" seek=24576 conv=notrunc
+endef
+
+define Build/custom-uboot-bin
+	# Use pre-compiled u-boot files from CUSTOM_UBOOT_DIR
+	# Standard Rockchip layout: idbloader(32KB) + uboot.img(8MB) + trust.bin(12MB)
+
+	# Generate a new partition table in $@ with 32 MiB of alignment padding
+	PADDING=1 $(SCRIPT_DIR)/gen_image_generic.sh \
+		$@ \
+		$(CONFIG_TARGET_KERNEL_PARTSIZE) $@.boot \
+		$(CONFIG_TARGET_ROOTFS_PARTSIZE) $(IMAGE_ROOTFS) \
+		32768
+
+	# Clear 8MB-16MB area (old uboot/data)
+	dd if=/dev/zero of="$@" seek=16384 count=16384 conv=notrunc
+
+	# Copy idbloader to sector 64 (32KB)
+	dd if="$(CUSTOM_UBOOT_DIR)"/idbloader.bin of="$@" seek=64 conv=notrunc
+
+	# Copy uboot.img to sector 16384 (8MB)
+	dd if="$(CUSTOM_UBOOT_DIR)"/uboot.img of="$@" seek=16384 conv=notrunc
+
+	# Copy trust.bin to sector 24576 (12MB)
+	dd if="$(CUSTOM_UBOOT_DIR)"/trust.bin of="$@" seek=24576 conv=notrunc
 endef
 
 ### Devices ###
