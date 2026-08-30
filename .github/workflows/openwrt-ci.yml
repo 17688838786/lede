@@ -1,4 +1,4 @@
-# 
+﻿# 
 # <https://github.com/KFERMercer/OpenWrt-CI>
 #
 # Copyright (C) 2019 P3TERX
@@ -63,7 +63,9 @@ jobs:
           ./scripts/feeds install -a
 
       - name: Generate configuration file
-        run: make defconfig
+        run: |
+          cp diffconfig .config
+          make defconfig
 
       - name: Download packages
         run: make download -j16
